@@ -1,0 +1,9 @@
+fahhhhh.mp3 is the default sound used for ALL events.
+
+To use different sounds per category, add these files:
+
+  error.mp3      — terminal errors, task failures, diagnostic errors
+  reply.mp3      — Claude CLI replies
+  permission.mp3 — Claude CLI permission prompts
+
+Any missing file automatically falls back to fahhhhh.mp3.

@@ -1,0 +1,128 @@
+{
+  "name": "faah-ai-reply-error-terminal-sound",
+  "displayName": "FAAH! Sound — AI Reply, Error & Terminal Alerts",
+  "description": "Plays the iconic FAAH sound when Claude CLI replies, asks permission, terminal commands fail, tasks error, or diagnostics fire. Works with Claude Code, Copilot Chat, and any LLM CLI. Customizable sounds, per-category toggles & cooldowns.",
+  "version": "0.1.0",
+  "publisher": "khavjhav",
+  "icon": "media/icon.png",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": ["Other"],
+  "keywords": [
+    "faah",
+    "faaaah",
+    "sound",
+    "error",
+    "terminal",
+    "ai reply",
+    "claude",
+    "llm",
+    "notification",
+    "alert",
+    "fail",
+    "cli",
+    "permission",
+    "copilot"
+  ],
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "license": "MIT",
+  "activationEvents": ["*"],
+  "main": "./src/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "FAAAAH Claude Sound",
+      "properties": {
+        "faahClaude.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable/disable all sounds"
+        },
+        "faahClaude.enableTerminalErrors": {
+          "type": "boolean",
+          "default": true,
+          "description": "Play sound on terminal command failures"
+        },
+        "faahClaude.enableClaudeReply": {
+          "type": "boolean",
+          "default": true,
+          "description": "Play sound when Claude CLI replies"
+        },
+        "faahClaude.enablePermissionPrompt": {
+          "type": "boolean",
+          "default": true,
+          "description": "Play sound when Claude CLI asks for permission"
+        },
+        "faahClaude.enableTaskFailures": {
+          "type": "boolean",
+          "default": true,
+          "description": "Play sound on VS Code task failures"
+        },
+        "faahClaude.enableDiagnosticErrors": {
+          "type": "boolean",
+          "default": true,
+          "description": "Play sound on compile/diagnostic errors"
+        },
+        "faahClaude.cooldown": {
+          "type": "number",
+          "default": 2000,
+          "description": "Global cooldown between sounds in milliseconds"
+        },
+        "faahClaude.cooldownClaudeReply": {
+          "type": "number",
+          "default": 3000,
+          "description": "Cooldown for Claude reply sounds in milliseconds"
+        },
+        "faahClaude.cooldownPermission": {
+          "type": "number",
+          "default": 1000,
+          "description": "Cooldown for permission prompt sounds in milliseconds"
+        },
+        "faahClaude.claudeReplyPatterns": {
+          "type": "array",
+          "default": [],
+          "description": "Additional regex patterns to detect Claude CLI replies (advanced)"
+        },
+        "faahClaude.permissionPatterns": {
+          "type": "array",
+          "default": [],
+          "description": "Additional regex patterns to detect permission prompts (advanced)"
+        },
+        "faahClaude.volume": {
+          "type": "number",
+          "default": 100,
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Volume level (0-100)"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "faahClaude.toggle",
+        "title": "FAAAAH Claude: Toggle Sounds On/Off"
+      },
+      {
+        "command": "faahClaude.testError",
+        "title": "FAAAAH Claude: Test Error Sound"
+      },
+      {
+        "command": "faahClaude.testReply",
+        "title": "FAAAAH Claude: Test Reply Sound"
+      },
+      {
+        "command": "faahClaude.testPermission",
+        "title": "FAAAAH Claude: Test Permission Sound"
+      }
+    ]
+  },
+  "scripts": {
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "^2.22.0"
+  }
+}
