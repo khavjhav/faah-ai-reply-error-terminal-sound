@@ -16,12 +16,57 @@ The **first VS Code sound extension that goes beyond errors.** Get notified when
 - **Volume control** — 0-100 range
 - **Custom sound files** — swap in your own sounds per category
 - **Status bar toggle** — one-click mute/unmute
+- **One-click setup** — auto-configures everything for you
+
+## Getting Started
+
+### Step 1: Install the extension
+
+Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=khavjhav.faah-ai-reply-error-terminal-sound) or search "FAAH" in VS Code Extensions.
+
+### Step 2: Enable Claude Reply Detection
+
+After installing, you'll see a **"FAAH: Enable AI detection"** button in the status bar (bottom right).
+
+**Click it → "Enable & Restart"** — that's it! The extension automatically:
+1. Updates your VS Code runtime config (`argv.json`)
+2. Restarts VS Code
+3. Full AI reply detection is now active
+
+> **What does this do?** It adds one line to VS Code's `argv.json` to enable terminal output reading. This is a standard VS Code setting — safe, reversible, and only affects this extension.
+
+### Manual Setup (if auto-setup doesn't work)
+
+1. Open Command Palette: `Ctrl+Shift+P`
+2. Type: **"Preferences: Configure Runtime Arguments"**
+3. Add this line inside the JSON (before the closing `}`):
+
+```json
+"enable-proposed-api": ["khavjhav.faah-ai-reply-error-terminal-sound"]
+```
+
+4. Save the file and restart VS Code
+
+### Step 3: Test it
+
+Open a terminal and try:
+
+```bash
+exit 1
+```
+
+Or use Command Palette → **"FAAAAH Claude: Test Error Sound"**
+
+With Claude CLI:
+```bash
+claude "hello"    # reply sound when Claude responds
+```
 
 ## Sound Files
 
 Ships with `fahhhhh.mp3` as the **default sound for all events** — works out of the box, zero config.
 
-Want different sounds per category? Drop these into the `media/` folder:
+Want different sounds per category? Drop these into the extension's `media/` folder:
 
 | File | Used for | Fallback |
 |------|----------|----------|
@@ -30,18 +75,6 @@ Want different sounds per category? Drop these into the `media/` folder:
 | `permission.mp3` | Permission prompts | `fahhhhh.mp3` |
 
 Any missing file automatically falls back to `fahhhhh.mp3`.
-
-## Quick Test
-
-After installing, open a terminal and try:
-
-```bash
-# Test error detection
-exit 1
-
-# Test with Claude CLI (if installed)
-claude "hello"    # reply sound when Claude responds
-```
 
 ## Settings
 
@@ -68,16 +101,29 @@ Open Command Palette (`Ctrl+Shift+P`) and search:
 - **FAAAAH Claude: Test Error Sound**
 - **FAAAAH Claude: Test Reply Sound**
 - **FAAAAH Claude: Test Permission Sound**
+- **FAAH!: Enable Claude Reply Detection** (one-time setup)
 
 ## How Detection Works
 
 Terminal output is buffered (300ms window), ANSI codes are stripped, then matched:
 
 - **Permission prompts**: `Allow once/always`, `(Y/n)`, `Run this command?`, `Approve/Deny`
-- **AI replies**: `⏺` markers, response phrasing (`I'll`, `Let me`, `Here's`), prompt returns (`❯`)
+- **AI replies**: response markers, phrasing patterns (`I'll`, `Let me`, `Here's`), prompt returns
 - **Errors**: `exit code N`, `ERR!`, `FAILED`, `Error:`, `fatal:`
 
 Priority: permission > reply > error (one sound per buffer flush).
+
+## What Works Without Setup vs With Setup
+
+| Feature | Without setup | After one-click setup |
+|---------|:---:|:---:|
+| Test commands | Yes | Yes |
+| Terminal error exit codes | Yes | Yes |
+| Task failure detection | Yes | Yes |
+| Diagnostic/compile errors | Yes | Yes |
+| **Claude CLI reply detection** | No | **Yes** |
+| **Permission prompt detection** | No | **Yes** |
+| **Any terminal output matching** | No | **Yes** |
 
 ## Requirements
 

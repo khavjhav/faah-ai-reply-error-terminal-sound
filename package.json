@@ -2,7 +2,7 @@
   "name": "faah-ai-reply-error-terminal-sound",
   "displayName": "FAAH! Sound — AI Reply, Error & Terminal Alerts",
   "description": "Plays the iconic FAAH sound when Claude CLI replies, asks permission, terminal commands fail, tasks error, or diagnostics fire. Works with Claude Code, Copilot Chat, and any LLM CLI. Customizable sounds, per-category toggles & cooldowns.",
-  "version": "1.0.3",
+  "version": "1.1.1",
   "publisher": "khavjhav",
   "icon": "media/logo-128.png",
   "engines": {
@@ -30,6 +30,7 @@
     "url": "https://github.com/khavjhav/faah-ai-reply-error-terminal-sound"
   },
   "license": "MIT",
+  "enabledApiProposals": ["terminalDataWriteEvent"],
   "activationEvents": ["onStartupFinished"],
   "main": "./src/extension.js",
   "contributes": {
@@ -116,6 +117,10 @@
       {
         "command": "faahClaude.testPermission",
         "title": "FAAAAH Claude: Test Permission Sound"
+      },
+      {
+        "command": "faahClaude.enableProposedApi",
+        "title": "FAAH!: Enable Claude Reply Detection (one-time setup)"
       }
     ]
   },
