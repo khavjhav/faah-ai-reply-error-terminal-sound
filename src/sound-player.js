@@ -34,18 +34,13 @@ class SoundPlayer {
     const vol = Math.max(0, Math.min(100, volume));
 
     if (this.platform === "win32") {
-      // Use PowerShell + Windows Media Player COM (works on every Windows)
-      const ps = `
-        Add-Type -AssemblyName presentationCore;
-        $p = New-Object System.Windows.Media.MediaPlayer;
-        $p.Open([Uri]::new('${filePath.replace(/\\/g, "/")}'));
-        $p.Volume = ${vol / 100};
-        $p.Play();
-        Start-Sleep -Milliseconds 3000;
-      `;
-      exec(`powershell -NoProfile -Command "${ps.replace(/\n/g, " ")}"`, {
-        windowsHide: true,
-      });
+      // Use PowerShell script file to avoid escaping issues
+      const scriptPath = path.join(__dirname, "play.ps1");
+      const safeFilePath = filePath.replace(/\\/g, "/");
+      exec(
+        `powershell -NoProfile -ExecutionPolicy Bypass -File "${scriptPath}" -FilePath "${safeFilePath}" -Volume ${vol / 100}`,
+        { windowsHide: true }
+      );
     } else if (this.platform === "darwin") {
       // macOS — afplay is pre-installed
       exec(`afplay -v ${vol / 100} "${filePath}"`);

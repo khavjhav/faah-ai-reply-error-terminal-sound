@@ -1,7 +1,9 @@
 // ---------------------------------------------------------------------------
-// FAAAAH Claude Sound — VS Code Extension
+// FAAH! Sound — VS Code Extension
 // Plays sounds on: terminal errors, Claude CLI replies, permission prompts,
 // task failures, and diagnostic errors.
+//
+// Uses STABLE VS Code APIs only (no proposed APIs).
 // ---------------------------------------------------------------------------
 const vscode = require("vscode");
 const path = require("path");
@@ -13,10 +15,7 @@ const {
   testPatterns,
 } = require("./patterns");
 
-// Default sound file for all categories is fahhhhh.mp3.
-// Users can drop custom files (error.mp3, reply.mp3, permission.mp3) into
-// media/ to override individual categories.
-const DEFAULT_SOUND = "fahhhhh.mp3";
+// Default sound file; category-specific files override if present
 const SOUNDS = {
   error: "error.mp3",
   reply: "reply.mp3",
@@ -80,42 +79,19 @@ function activate(context) {
     return [...builtIn, ...compiled];
   }
 
-  // ------------------------------------------------------------------
-  // 1. Terminal output watcher (Claude replies + permission + errors)
-  // ------------------------------------------------------------------
+  /**
+   * Strip ANSI escape codes from terminal text.
+   */
+  function stripAnsi(text) {
+    // eslint-disable-next-line no-control-regex
+    return text.replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, "");
+  }
 
-  // Buffer terminal data per-terminal so we can match across chunks
-  const termBuffers = new Map();
-  const BUFFER_FLUSH_MS = 300; // flush buffer after 300 ms of silence
-  const BUFFER_MAX = 4096; // max chars to keep per terminal
-
-  const termDataSub = vscode.window.onDidWriteTerminalData((event) => {
-    if (!cfg("enable")) return;
-
-    const termKey = event.terminal.name;
-    if (!termBuffers.has(termKey)) {
-      termBuffers.set(termKey, { text: "", timer: null });
-    }
-    const buf = termBuffers.get(termKey);
-
-    // Append new data, cap at max length
-    buf.text = (buf.text + event.data).slice(-BUFFER_MAX);
-
-    // Reset flush timer
-    if (buf.timer) clearTimeout(buf.timer);
-    buf.timer = setTimeout(() => {
-      processBuffer(buf.text);
-      buf.text = "";
-    }, BUFFER_FLUSH_MS);
-  });
-
-  function processBuffer(text) {
-    // Strip ANSI escape codes for cleaner matching
-    const clean = text.replace(
-      // eslint-disable-next-line no-control-regex
-      /\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g,
-      ""
-    );
+  /**
+   * Analyse a chunk of terminal output and play the appropriate sound.
+   */
+  function analyseOutput(text) {
+    const clean = stripAnsi(text);
 
     // Priority: permission > reply > error
     const permPatterns = mergePatterns(
@@ -138,10 +114,61 @@ function activate(context) {
     }
   }
 
-  context.subscriptions.push(termDataSub);
+  // ------------------------------------------------------------------
+  // 1. Terminal shell execution — read command output (stable API)
+  //    Requires shell integration to be active in the terminal.
+  // ------------------------------------------------------------------
+  if (vscode.window.onDidStartTerminalShellExecution) {
+    const shellExecSub = vscode.window.onDidStartTerminalShellExecution(
+      async (event) => {
+        if (!cfg("enable")) return;
+
+        const execution = event.execution;
+        // Read the output stream
+        try {
+          const stream = execution.read();
+          let buffer = "";
+          for await (const data of stream) {
+            buffer += data;
+            // Process in chunks to avoid too-frequent matching
+            if (buffer.length > 200) {
+              analyseOutput(buffer);
+              buffer = "";
+            }
+          }
+          // Process any remaining buffer
+          if (buffer.length > 0) {
+            analyseOutput(buffer);
+          }
+        } catch {
+          // Stream may not be available for all terminals
+        }
+      }
+    );
+    context.subscriptions.push(shellExecSub);
+  }
 
   // ------------------------------------------------------------------
-  // 2. Task failure watcher
+  // 2. Terminal shell execution end — detect exit code errors
+  // ------------------------------------------------------------------
+  if (vscode.window.onDidEndTerminalShellExecution) {
+    const shellEndSub = vscode.window.onDidEndTerminalShellExecution(
+      (event) => {
+        if (!cfg("enable") || !cfg("enableTerminalErrors")) return;
+        if (
+          event.exitCode !== undefined &&
+          event.exitCode !== null &&
+          event.exitCode !== 0
+        ) {
+          playCategory("error");
+        }
+      }
+    );
+    context.subscriptions.push(shellEndSub);
+  }
+
+  // ------------------------------------------------------------------
+  // 3. Task failure watcher
   // ------------------------------------------------------------------
   const taskEndSub = vscode.tasks.onDidEndTaskProcess((event) => {
     if (
@@ -156,7 +183,7 @@ function activate(context) {
   context.subscriptions.push(taskEndSub);
 
   // ------------------------------------------------------------------
-  // 3. Diagnostic (compile error) watcher
+  // 4. Diagnostic (compile error) watcher
   // ------------------------------------------------------------------
   const diagSub = vscode.languages.onDidChangeDiagnostics((event) => {
     if (!cfg("enable") || !cfg("enableDiagnosticErrors")) return;
@@ -174,7 +201,7 @@ function activate(context) {
   context.subscriptions.push(diagSub);
 
   // ------------------------------------------------------------------
-  // 4. Commands
+  // 5. Commands
   // ------------------------------------------------------------------
   context.subscriptions.push(
     vscode.commands.registerCommand("faahClaude.toggle", () => {
@@ -183,7 +210,7 @@ function activate(context) {
         .getConfiguration("faahClaude")
         .update("enable", !current, vscode.ConfigurationTarget.Global);
       vscode.window.showInformationMessage(
-        `FAAAAH Claude sounds ${!current ? "enabled" : "disabled"} 🔊`
+        `FAAH! sounds ${!current ? "enabled" : "disabled"}`
       );
     }),
     vscode.commands.registerCommand("faahClaude.testError", () => {
@@ -204,13 +231,13 @@ function activate(context) {
     vscode.StatusBarAlignment.Right,
     100
   );
-  statusBar.text = "$(unmute) FAAAAH";
-  statusBar.tooltip = "Click to toggle FAAAAH Claude sounds";
+  statusBar.text = "$(unmute) FAAH!";
+  statusBar.tooltip = "Click to toggle FAAH! sounds";
   statusBar.command = "faahClaude.toggle";
   statusBar.show();
   context.subscriptions.push(statusBar);
 
-  console.log("[faah-claude] Extension activated");
+  console.log("[faah-claude] Extension activated successfully");
 }
 
 function deactivate() {}
